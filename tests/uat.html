@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待办事项应用 - 用户验收测试</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .uat-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .uat-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .uat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .uat-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        .uat-card:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+        }
+        .uat-card h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .uat-card.completed {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        .uat-card.failed {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        .uat-progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .uat-progress-bar {
+            background: linear-gradient(45deg, #007bff, #28a745);
+            height: 100%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .uat-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .uat-metric {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        .uat-metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .uat-metric-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .uat-actions {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .uat-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .uat-btn.primary {
+            background: #007bff;
+            color: white;
+        }
+        .uat-btn.success {
+            background: #28a745;
+            color: white;
+        }
+        .uat-btn.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .uat-btn.danger {
+            background: #dc3545;
+            color: white;
+        }
+        .uat-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .uat-test-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .uat-test-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #28a745;
+        }
+        .uat-test-item label {
+            flex: 1;
+            cursor: pointer;
+            user-select: none;
+        }
+        .uat-test-item.completed {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .uat-test-item.completed label {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        .uat-notes {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .uat-notes h4 {
+            margin-top: 0;
+            color: #856404;
+        }
+        .uat-notes textarea {
+            width: 100%;
+            min-height: 100px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            resize: vertical;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="uat-container">
+            <h1>待办事项应用 - 用户验收测试</h1>
+            
+            <div class="uat-panel">
+                <h2>测试概览</h2>
+                <div class="uat-progress">
+                    <div id="progress-bar" class="uat-progress-bar" style="width: 0%">0%</div>
+                </div>
+                <div class="uat-summary">
+                    <div class="uat-metric">
+                        <div id="total-tests" class="uat-metric-value">0</div>
+                        <div class="uat-metric-label">总测试项</div>
+                    </div>
+                    <div class="uat-metric">
+                        <div id="completed-tests" class="uat-metric-value">0</div>
+                        <div class="uat-metric-label">已完成</div>
+                    </div>
+                    <div class="uat-metric">
+                        <div id="failed-tests" class="uat-metric-value">0</div>
+                        <div class="uat-metric-label">失败</div>
+                    </div>
+                    <div class="uat-metric">
+                        <div id="pass-rate" class="uat-metric-value">0%</div>
+                        <div class="uat-metric-label">通过率</div>
+                    </div>
+                </div>
+                <div class="uat-actions">
+                    <button class="uat-btn primary" onclick="startUAT()">开始测试</button>
+                    <button class="uat-btn success" onclick="exportResults()">导出结果</button>
+                    <button class="uat-btn warning" onclick="resetTests()">重置测试</button>
+                    <button class="uat-btn danger" onclick="generateReport()">生成报告</button>
+                </div>
+            </div>
+
+            <div class="uat-grid">
+                <!-- 基础功能测试 -->
+                <div class="uat-card" id="basic-tests">
+                    <h3>基础功能测试</h3>
+                    <div class="uat-test-list">
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-1" onchange="updateTestStatus(this)">
+                            <label for="test-1">应用可以正常启动和初始化</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-2" onchange="updateTestStatus(this)">
+                            <label for="test-2">可以添加新的待办事项</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-3" onchange="updateTestStatus(this)">
+                            <label for="test-3">可以标记任务为已完成</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-4" onchange="updateTestStatus(this)">
+                            <label for="test-4">可以删除待办事项</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-5" onchange="updateTestStatus(this)">
+                            <label for="test-5">统计信息显示正确</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据持久化测试 -->
+                <div class="uat-card" id="persistence-tests">
+                    <h3>数据持久化测试</h3>
+                    <div class="uat-test-list">
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-6" onchange="updateTestStatus(this)">
+                            <label for="test-6">刷新页面后数据不丢失</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-7" onchange="updateTestStatus(this)">
+                            <label for="test-7">关闭浏览器后数据不丢失</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-8" onchange="updateTestStatus(this)">
+                            <label for="test-8">数据格式正确</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-9" onchange="updateTestStatus(this)">
+                            <label for="test-9">支持大量数据存储</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户体验测试 -->
+                <div class="uat-card" id="ux-tests">
+                    <h3>用户体验测试</h3>
+                    <div class="uat-test-list">
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-10" onchange="updateTestStatus(this)">
+                            <label for="test-10">界面简洁美观</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-11" onchange="updateTestStatus(this)">
+                            <label for="test-11">操作响应及时</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-12" onchange="updateTestStatus(this)">
+                            <label for="test-12">错误提示友好</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-13" onchange="updateTestStatus(this)">
+                            <label for="test-13">动画效果流畅</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 响应式设计测试 -->
+                <div class="uat-card" id="responsive-tests">
+                    <h3>响应式设计测试</h3>
+                    <div class="uat-test-list">
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-14" onchange="updateTestStatus(this)">
+                            <label for="test-14">桌面端显示正常</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-15" onchange="updateTestStatus(this)">
+                            <label for="test-15">平板端显示正常</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-16" onchange="updateTestStatus(this)">
+                            <label for="test-16">手机端显示正常</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-17" onchange="updateTestStatus(this)">
+                            <label for="test-17">不同分辨率适配</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 性能测试 -->
+                <div class="uat-card" id="performance-tests">
+                    <h3>性能测试</h3>
+                    <div class="uat-test-list">
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-18" onchange="updateTestStatus(this)">
+                            <label for="test-18">加载时间小于3秒</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-19" onchange="updateTestStatus(this)">
+                            <label for="test-19">操作响应时间小于500ms</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-20" onchange="updateTestStatus(this)">
+                            <label for="test-20">支持1000个任务不卡顿</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 边界情况测试 -->
+                <div class="uat-card" id="edge-case-tests">
+                    <h3>边界情况测试</h3>
+                    <div class="uat-test-list">
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-21" onchange="updateTestStatus(this)">
+                            <label for="test-21">空输入被正确处理</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-22" onchange="updateTestStatus(this)">
+                            <label for="test-22">超长文本被正确处理</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-23" onchange="updateTestStatus(this)">
+                            <label for="test-23">HTML标签被正确转义</label>
+                        </div>
+                        <div class="uat-test-item">
+                            <input type="checkbox" id="test-24" onchange="updateTestStatus(this)">
+                            <label for="test-24">存储空间不足时的处理</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 测试应用区域 -->
+            <div class="uat-panel">
+                <h2>测试应用</h2>
+                <p>请在下方应用中执行各项测试操作：</p>
+                <div id="uat-app-container"></div>
+            </div>
+
+            <!-- 测试笔记 -->
+            <div class="uat-panel">
+                <h2>测试笔记</h2>
+                <div class="uat-notes">
+                    <h4>发现的问题</h4>
+                    <textarea id="issues-notes" placeholder="记录测试过程中发现的问题..."></textarea>
+                </div>
+                <div class="uat-notes">
+                    <h4>改进建议</h4>
+                    <textarea id="suggestions-notes" placeholder="记录改进建议..."></textarea>
+                </div>
+                <div class="uat-notes">
+                    <h4>其他备注</h4>
+                    <textarea id="other-notes" placeholder="其他测试备注..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入应用组件 -->
+    <script src="../js/storage.js"></script>
+    <script src="../js/validator.js"></script>
+    <script src="../js/manager.js"></script>
+    <script src="../js/renderer.js"></script>
+    <script src="../js/app.js"></script>
+
+    <!-- UAT测试脚本 -->
+    <script>
+        let uatResults = {
+            startTime: null,
+            endTime: null,
+            tests: {},
+            notes: {
+                issues: '',
+                suggestions: '',
+                other: ''
+            },
+            environment: {}
+        };
+
+        // 初始化测试环境
+        function initUATEnvironment() {
+            uatResults.environment = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                localStorage: typeof Storage !== 'undefined',
+                screenResolution: `${screen.width}x${screen.height}`,
+                viewportSize: `${window.innerWidth}x${window.innerHeight}`,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // 开始UAT测试
+        function startUAT() {
+            uatResults.startTime = new Date();
+            initUATEnvironment();
+            
+            // 创建测试应用实例
+            createTestApp();
+            
+            // 初始化所有测试项
+            const testCheckboxes = document.querySelectorAll('.uat-test-item input[type="checkbox"]');
+            testCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.disabled = false;
+                uatResults.tests[checkbox.id] = {
+                    completed: false,
+                    passed: false,
+                    timestamp: null
+                };
+            });
+            
+            updateProgress();
+            alert('用户验收测试已开始，请在右侧应用中执行各项测试操作，然后勾选相应的测试项。');
+        }
+
+        // 创建测试应用
+        function createTestApp() {
+            const container = document.getElementById('uat-app-container');
+            container.innerHTML = `
+                <div class="container">
+                    <header class="header">
+                        <h1 class="app-title">待办事项 - 测试版</h1>
+                        <div class="stats">
+                            <span class="stat-item">总计: <span id="uat-total-count">0</span></span>
+                            <span class="stat-item">已完成: <span id="uat-completed-count">0</span></span>
+                            <span class="stat-item">待完成: <span id="uat-pending-count">0</span></span>
+                        </div>
+                    </header>
+                    <main class="main">
+                        <section class="input-section">
+                            <div class="input-container">
+                                <input type="text" id="uat-todo-input" class="todo-input" placeholder="添加新的待办事项..." maxlength="200">
+                                <button id="uat-add-btn" class="add-btn">添加</button>
+                            </div>
+                            <div id="uat-error-message" class="error-message"></div>
+                        </section>
+                        <section class="todo-section">
+                            <div id="uat-todo-list" class="todo-list"></div>
+                            <div id="uat-empty-state" class="empty-state">
+                                <div class="empty-icon">📝</div>
+                                <p class="empty-text">暂无待办事项</p>
+                                <p class="empty-subtext">添加一个新任务开始吧！</p>
+                            </div>
+                        </section>
+                    </main>
+                </div>
+            `;
+
+            // 初始化测试应用
+            const testApp = new TodoApp();
+            testApp.initialize().then(() => {
+                // 为测试应用创建独立的DOM元素
+                testApp.components.renderer.elements = {
+                    todoInput: document.getElementById('uat-todo-input'),
+                    addBtn: document.getElementById('uat-add-btn'),
+                    todoList: document.getElementById('uat-todo-list'),
+                    emptyState: document.getElementById('uat-empty-state'),
+                    totalCount: document.getElementById('uat-total-count'),
+                    completedCount: document.getElementById('uat-completed-count'),
+                    pendingCount: document.getElementById('uat-pending-count'),
+                    errorMessage: document.getElementById('uat-error-message')
+                };
+                
+                // 重新绑定事件
+                testApp.components.renderer.bindEvents();
+                testApp.components.renderer.render();
+            });
+        }
+
+        // 更新测试状态
+        function updateTestStatus(checkbox) {
+            const testId = checkbox.id;
+            const isCompleted = checkbox.checked;
+            
+            uatResults.tests[testId] = {
+                completed: isCompleted,
+                passed: isCompleted,
+                timestamp: new Date().toISOString()
+            };
+            
+            // 更新UI
+            const testItem = checkbox.closest('.uat-test-item');
+            if (isCompleted) {
+                testItem.classList.add('completed');
+            } else {
+                testItem.classList.remove('completed');
+            }
+            
+            updateProgress();
+            checkTestCategoryCompletion();
+        }
+
+        // 更新进度
+        function updateProgress() {
+            const totalTests = Object.keys(uatResults.tests).length;
+            const completedTests = Object.values(uatResults.tests).filter(test => test.completed).length;
+            const passRate = totalTests > 0 ? Math.round((completedTests / totalTests) * 100) : 0;
+            
+            document.getElementById('total-tests').textContent = totalTests;
+            document.getElementById('completed-tests').textContent = completedTests;
+            document.getElementById('failed-tests').textContent = totalTests - completedTests;
+            document.getElementById('pass-rate').textContent = passRate + '%';
+            
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = passRate + '%';
+            progressBar.textContent = passRate + '%';
+        }
+
+        // 检查测试类别完成情况
+        function checkTestCategoryCompletion() {
+            const categories = ['basic-tests', 'persistence-tests', 'ux-tests', 'responsive-tests', 'performance-tests', 'edge-case-tests'];
+            
+            categories.forEach(categoryId => {
+                const category = document.getElementById(categoryId);
+                const checkboxes = category.querySelectorAll('.uat-test-item input[type="checkbox"]');
+                const totalCheckboxes = checkboxes.length;
+                const completedCheckboxes = Array.from(checkboxes).filter(cb => cb.checked).length;
+                
+                if (totalCheckboxes > 0) {
+                    const completionRate = completedCheckboxes / totalCheckboxes;
+                    
+                    if (completionRate === 1) {
+                        category.classList.add('completed');
+                        category.classList.remove('failed');
+                    } else if (completionRate === 0) {
+                        category.classList.remove('completed', 'failed');
+                    } else {
+                        category.classList.remove('completed', 'failed');
+                    }
+                }
+            });
+        }
+
+        // 重置测试
+        function resetTests() {
+            if (confirm('确定要重置所有测试结果吗？')) {
+                // 重置所有复选框
+                const checkboxes = document.querySelectorAll('.uat-test-item input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.disabled = false;
+                    const testItem = checkbox.closest('.uat-test-item');
+                    testItem.classList.remove('completed');
+                });
+                
+                // 重置测试结果
+                uatResults = {
+                    startTime: null,
+                    endTime: null,
+                    tests: {},
+                    notes: {
+                        issues: '',
+                        suggestions: '',
+                        other: ''
+                    },
+                    environment: {}
+                };
+                
+                // 重置进度
+                updateProgress();
+                
+                // 重置类别状态
+                const categories = document.querySelectorAll('.uat-card');
+                categories.forEach(category => {
+                    category.classList.remove('completed', 'failed');
+                });
+                
+                // 清空笔记
+                document.getElementById('issues-notes').value = '';
+                document.getElementById('suggestions-notes').value = '';
+                document.getElementById('other-notes').value = '';
+            }
+        }
+
+        // 导出结果
+        function exportResults() {
+            uatResults.endTime = new Date();
+            uatResults.notes.issues = document.getElementById('issues-notes').value;
+            uatResults.notes.suggestions = document.getElementById('suggestions-notes').value;
+            uatResults.notes.other = document.getElementById('other-notes').value;
+            
+            const totalTests = Object.keys(uatResults.tests).length;
+            const completedTests = Object.values(uatResults.tests).filter(test => test.completed).length;
+            const passedTests = Object.values(uatResults.tests).filter(test => test.passed).length;
+            
+            const summary = {
+                totalTests,
+                completedTests,
+                passedTests,
+                passRate: totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0,
+                duration: uatResults.endTime - uatResults.startTime,
+                testCompleted: completedTests === totalTests
+            };
+            
+            const report = {
+                summary,
+                results: uatResults,
+                generatedAt: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `uat-report-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 生成报告
+        function generateReport() {
+            exportResults();
+            
+            const totalTests = Object.keys(uatResults.tests).length;
+            const completedTests = Object.values(uatResults.tests).filter(test => test.completed).length;
+            const passedTests = Object.values(uatResults.tests).filter(test => test.passed).length;
+            const passRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+            
+            let reportContent = `# 用户验收测试报告\n\n`;
+            reportContent += `## 测试概览\n`;
+            reportContent += `- **测试时间**: ${new Date().toLocaleString()}\n`;
+            reportContent += `- **测试环境**: ${uatResults.environment.platform} - ${uatResults.environment.userAgent}\n`;
+            reportContent += `- **总测试项**: ${totalTests}\n`;
+            reportContent += `- **已完成**: ${completedTests}\n`;
+            reportContent += `- **通过**: ${passedTests}\n`;
+            reportContent += `- **通过率**: ${passRate}%\n\n`;
+            
+            if (uatResults.notes.issues) {
+                reportContent += `## 发现的问题\n${uatResults.notes.issues}\n\n`;
+            }
+            
+            if (uatResults.notes.suggestions) {
+                reportContent += `## 改进建议\n${uatResults.notes.suggestions}\n\n`;
+            }
+            
+            if (uatResults.notes.other) {
+                reportContent += `## 其他备注\n${uatResults.notes.other}\n\n`;
+            }
+            
+            reportContent += `## 结论\n`;
+            if (passRate >= 90) {
+                reportContent += `应用质量优秀，可以正式发布。\n`;
+            } else if (passRate >= 70) {
+                reportContent += `应用质量良好，建议修复发现的问题后发布。\n`;
+            } else {
+                reportContent += `应用需要进一步改进，建议解决关键问题后再发布。\n`;
+            }
+            
+            const blob = new Blob([reportContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `uat-report-${new Date().toISOString().split('T')[0]}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initUATEnvironment();
+            
+            // 初始化所有测试项
+            const testCheckboxes = document.querySelectorAll('.uat-test-item input[type="checkbox"]');
+            testCheckboxes.forEach(checkbox => {
+                checkbox.disabled = true;
+                uatResults.tests[checkbox.id] = {
+                    completed: false,
+                    passed: false,
+                    timestamp: null
+                };
+            });
+            
+            updateProgress();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待办事项应用测试</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .test-summary {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .test-actions {
+            margin: 20px 0;
+        }
+        .test-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .test-btn.primary {
+            background: #007bff;
+            color: white;
+        }
+        .test-btn.success {
+            background: #28a745;
+            color: white;
+        }
+        .test-btn.danger {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-container">
+            <h1>待办事项应用测试</h1>
+            
+            <div class="test-actions">
+                <button class="test-btn primary" onclick="runAllTests()">运行所有测试</button>
+                <button class="test-btn success" onclick="runComponentTests()">组件测试</button>
+                <button class="test-btn danger" onclick="clearTestResults()">清除结果</button>
+            </div>
+            
+            <div id="test-summary" class="test-summary" style="display: none;"></div>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <!-- 引入应用组件 -->
+    <script src="../js/storage.js"></script>
+    <script src="../js/validator.js"></script>
+    <script src="../js/manager.js"></script>
+    <script src="../js/renderer.js"></script>
+    
+    <!-- 测试脚本 -->
+    <script>
+        // 测试工具函数
+        class TestUtils {
+            static createTestContainer() {
+                const container = document.createElement('div');
+                container.style.display = 'none';
+                document.body.appendChild(container);
+                return container;
+            }
+            
+            static cleanupTestContainer(container) {
+                if (container && container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
+            }
+            
+            static assert(condition, message) {
+                if (!condition) {
+                    throw new Error(message || '断言失败');
+                }
+            }
+            
+            static assertEquals(actual, expected, message) {
+                if (actual !== expected) {
+                    throw new Error(message || `期望 ${expected}，实际得到 ${actual}`);
+                }
+            }
+            
+            static assertTrue(condition, message) {
+                if (!condition) {
+                    throw new Error(message || '期望为true，实际为false');
+                }
+            }
+            
+            static assertFalse(condition, message) {
+                if (condition) {
+                    throw new Error(message || '期望为false，实际为true');
+                }
+            }
+            
+            static assertThrows(fn, expectedMessage) {
+                try {
+                    fn();
+                    throw new Error('期望抛出异常，但没有抛出');
+                } catch (error) {
+                    if (expectedMessage && !error.message.includes(expectedMessage)) {
+                        throw new Error(`期望异常消息包含 "${expectedMessage}"，实际得到 "${error.message}"`);
+                    }
+                }
+            }
+        }
+
+        // 测试结果管理
+        class TestRunner {
+            constructor() {
+                this.results = [];
+                this.startTime = null;
+                this.endTime = null;
+            }
+            
+            start() {
+                this.startTime = Date.now();
+                this.results = [];
+            }
+            
+            end() {
+                this.endTime = Date.now();
+            }
+            
+            addResult(testName, passed, error = null) {
+                this.results.push({
+                    name: testName,
+                    passed: passed,
+                    error: error,
+                    duration: this.endTime ? this.endTime - this.startTime : 0
+                });
+            }
+            
+            getSummary() {
+                const total = this.results.length;
+                const passed = this.results.filter(r => r.passed).length;
+                const failed = total - passed;
+                const duration = this.endTime - this.startTime;
+                
+                return {
+                    total,
+                    passed,
+                    failed,
+                    duration,
+                    passRate: total > 0 ? Math.round((passed / total) * 100) : 0
+                };
+            }
+            
+            displayResults() {
+                const container = document.getElementById('test-results');
+                const summary = this.getSummary();
+                
+                // 显示总结
+                const summaryElement = document.getElementById('test-summary');
+                summaryElement.style.display = 'block';
+                summaryElement.innerHTML = `
+                    测试完成！总共 ${summary.total} 个测试，通过 ${summary.passed} 个，失败 ${summary.failed} 个。
+                    通过率: ${summary.passRate}%，耗时: ${summary.duration}ms
+                `;
+                
+                // 显示详细结果
+                container.innerHTML = '';
+                this.results.forEach(result => {
+                    const resultElement = document.createElement('div');
+                    resultElement.className = `test-result ${result.passed ? 'pass' : 'fail'}`;
+                    resultElement.innerHTML = `
+                        <strong>${result.name}</strong>
+                        ${result.passed ? '✓ 通过' : '✗ 失败'}
+                        ${result.error ? `<br><small>${result.error.message}</small>` : ''}
+                    `;
+                    container.appendChild(resultElement);
+                });
+            }
+        }
+
+        // StorageManager测试
+        class StorageManagerTests {
+            static run(runner) {
+                console.log('运行StorageManager测试...');
+                
+                // 测试初始化
+                runner.addResult('StorageManager初始化', () => {
+                    const storage = new StorageManager();
+                    TestUtils.assertTrue(storage.isAvailable !== undefined);
+                    TestUtils.assertTrue(storage.storageKey === 'todo-app-data');
+                }());
+                
+                // 测试数据保存和加载
+                runner.addResult('数据保存和加载', () => {
+                    const storage = new StorageManager();
+                    const testData = { test: 'data', number: 123 };
+                    
+                    const saveResult = storage.save('test-key', testData);
+                    TestUtils.assertTrue(saveResult);
+                    
+                    const loadedData = storage.load('test-key');
+                    TestUtils.assertEquals(loadedData.test, 'data');
+                    TestUtils.assertEquals(loadedData.number, 123);
+                    
+                    // 清理
+                    storage.remove('test-key');
+                }());
+                
+                // 测试待办事项保存
+                runner.addResult('待办事项保存', () => {
+                    const storage = new StorageManager();
+                    const todos = [
+                        { id: '1', text: '测试任务1', completed: false, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+                        { id: '2', text: '测试任务2', completed: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+                    ];
+                    
+                    const saveResult = storage.saveTodos(todos);
+                    TestUtils.assertTrue(saveResult);
+                    
+                    const loadedData = storage.loadTodos();
+                    TestUtils.assertEquals(loadedData.todos.length, 2);
+                    TestUtils.assertEquals(loadedData.todos[0].text, '测试任务1');
+                }());
+                
+                // 测试数据删除
+                runner.addResult('数据删除', () => {
+                    const storage = new StorageManager();
+                    storage.save('test-delete', { data: 'test' });
+                    
+                    const removeResult = storage.remove('test-delete');
+                    TestUtils.assertTrue(removeResult);
+                    
+                    const loadedData = storage.load('test-delete');
+                    TestUtils.assertTrue(loadedData === null);
+                }());
+            }
+        }
+
+        // TodoValidator测试
+        class TodoValidatorTests {
+            static run(runner) {
+                console.log('运行TodoValidator测试...');
+                
+                const validator = new TodoValidator();
+                
+                // 测试文本验证
+                runner.addResult('有效文本验证', () => {
+                    const result = validator.validateTodoText('这是一个有效的任务');
+                    TestUtils.assertTrue(result.isValid);
+                    TestUtils.assertEquals(result.sanitizedText, '这是一个有效的任务');
+                }());
+                
+                // 测试空文本验证
+                runner.addResult('空文本验证', () => {
+                    const result = validator.validateTodoText('');
+                    TestUtils.assertFalse(result.isValid);
+                    TestUtils.assertTrue(result.errors.includes('任务内容不能为空'));
+                }());
+                
+                // 测试长文本验证
+                runner.addResult('长文本验证', () => {
+                    const longText = 'a'.repeat(300);
+                    const result = validator.validateTodoText(longText);
+                    TestUtils.assertTrue(result.isValid);
+                    TestUtils.assertEquals(result.sanitizedText.length, 200);
+                }());
+                
+                // 测试HTML转义
+                runner.addResult('HTML转义', () => {
+                    const result = validator.validateTodoText('<script>alert("test")</script>');
+                    TestUtils.assertTrue(result.isValid);
+                    TestUtils.assertTrue(result.sanitizedText.includes('&lt;script&gt;'));
+                }());
+                
+                // 测试完整待办事项验证
+                runner.addResult('完整待办事项验证', () => {
+                    const todo = {
+                        id: 'test-id',
+                        text: '测试任务',
+                        completed: false,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    const result = validator.validateTodoData(todo);
+                    TestUtils.assertTrue(result.isValid);
+                    TestUtils.assertEquals(result.sanitizedTodo.text, '测试任务');
+                }());
+                
+                // 测试无效待办事项验证
+                runner.addResult('无效待办事项验证', () => {
+                    const todo = {
+                        id: '',
+                        text: '',
+                        completed: 'invalid'
+                    };
+                    
+                    const result = validator.validateTodoData(todo);
+                    TestUtils.assertFalse(result.isValid);
+                    TestUtils.assertTrue(result.errors.length > 0);
+                }());
+            }
+        }
+
+        // TodoManager测试
+        class TodoManagerTests {
+            static run(runner) {
+                console.log('运行TodoManager测试...');
+                
+                // 创建测试用的StorageManager和Validator
+                const storage = new StorageManager();
+                const validator = new TodoValidator();
+                const manager = new TodoManager(storage, validator);
+                
+                // 初始化
+                runner.addResult('TodoManager初始化', async () => {
+                    const result = await manager.initialize();
+                    TestUtils.assertTrue(result);
+                    TestUtils.assertTrue(manager.initialized);
+                }());
+                
+                // 测试添加任务
+                runner.addResult('添加任务', () => {
+                    const todo = manager.addTodo('测试任务');
+                    TestUtils.assertTrue(todo !== null);
+                    TestUtils.assertEquals(todo.text, '测试任务');
+                    TestUtils.assertEquals(todo.completed, false);
+                }());
+                
+                // 测试任务状态切换
+                runner.addResult('任务状态切换', () => {
+                    const todo = manager.addTodo('切换测试');
+                    const result = manager.toggleTodo(todo.id);
+                    TestUtils.assertTrue(result);
+                    
+                    const updatedTodo = manager.getTodoById(todo.id);
+                    TestUtils.assertTrue(updatedTodo.completed);
+                }());
+                
+                // 测试删除任务
+                runner.addResult('删除任务', () => {
+                    const todo = manager.addTodo('删除测试');
+                    const result = manager.deleteTodo(todo.id);
+                    TestUtils.assertTrue(result);
+                    
+                    const deletedTodo = manager.getTodoById(todo.id);
+                    TestUtils.assertTrue(deletedTodo === null);
+                }());
+                
+                // 测试统计功能
+                runner.addResult('统计功能', () => {
+                    manager.clearAllTodos();
+                    manager.addTodo('任务1');
+                    manager.addTodo('任务2');
+                    manager.toggleTodo(manager.getAllTodos()[0].id);
+                    
+                    const stats = manager.getStats();
+                    TestUtils.assertEquals(stats.total, 2);
+                    TestUtils.assertEquals(stats.completed, 1);
+                    TestUtils.assertEquals(stats.pending, 1);
+                    TestUtils.assertEquals(stats.completionRate, 0.5);
+                }());
+                
+                // 测试搜索功能
+                runner.addResult('搜索功能', () => {
+                    manager.clearAllTodos();
+                    manager.addTodo('学习JavaScript');
+                    manager.addTodo('学习CSS');
+                    manager.addTodo('买菜');
+                    
+                    const results = manager.searchTodos('学习');
+                    TestUtils.assertEquals(results.length, 2);
+                }());
+                
+                // 清理
+                manager.clearAllTodos();
+            }
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            const runner = new TestRunner();
+            runner.start();
+            
+            try {
+                StorageManagerTests.run(runner);
+                TodoValidatorTests.run(runner);
+                await TodoManagerTests.run(runner);
+            } catch (error) {
+                console.error('测试运行失败:', error);
+            }
+            
+            runner.end();
+            runner.displayResults();
+        }
+
+        // 运行组件测试
+        function runComponentTests() {
+            const runner = new TestRunner();
+            runner.start();
+            
+            try {
+                StorageManagerTests.run(runner);
+                TodoValidatorTests.run(runner);
+            } catch (error) {
+                console.error('组件测试失败:', error);
+            }
+            
+            runner.end();
+            runner.displayResults();
+        }
+
+        // 清除测试结果
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('test-summary').style.display = 'none';
+        }
+
+        // 页面加载完成后自动运行测试
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('测试页面加载完成');
+        });
+    </script>
+</body>
+</html>
